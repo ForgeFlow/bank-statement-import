@@ -3,6 +3,7 @@
 # Copyright 2022-2023 Therp BV (https://therp.nl)
 # Copyright 2026 Ryan Duguid <ryan@duguid.com.au>
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+# ruff: noqa: DTZ001 - the provider API works with naive UTC datetimes
 import logging
 from datetime import date, datetime
 from unittest import mock

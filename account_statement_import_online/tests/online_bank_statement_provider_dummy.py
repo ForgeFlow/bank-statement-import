@@ -1,6 +1,7 @@
 # Copyright 2019-2020 Brainbean Apps (https://brainbeanapps.com)
 # Copyright 2019-2020 Dataplug (https://dataplug.io)
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
+# ruff: noqa: DTZ001 - the provider API works with naive UTC datetimes
 
 from datetime import datetime, timedelta
 from random import randrange
