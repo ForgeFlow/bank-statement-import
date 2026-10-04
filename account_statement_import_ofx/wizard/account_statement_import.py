@@ -22,7 +22,7 @@ class AccountStatementImport(models.TransientModel):
             return False
         try:
             ofx = OfxParser.parse(io.BytesIO(data_file))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - not an OFX file
             _logger.debug(e)
             return False
         return ofx
