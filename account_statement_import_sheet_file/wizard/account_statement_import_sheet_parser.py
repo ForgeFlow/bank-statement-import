@@ -6,6 +6,7 @@
 
 """Parse mapped bank statement sheet files into Odoo import values."""
 
+import contextlib
 import itertools
 import logging
 import math
@@ -16,7 +17,7 @@ from decimal import Decimal
 from io import StringIO
 from os import path
 
-from odoo import api, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools.mimetypes import guess_mimetype
 
@@ -84,7 +85,7 @@ class AccountStatementImportSheetParser(models.TransientModel):
             raise ValueError(f"Unsupported sheet type: {sheet_type}")
         journal = self.env["account.journal"].browse(self.env.context.get("journal_id"))
         currency_code = (journal.currency_id or journal.company_id.currency_id).name
-        account_number = journal.bank_account_id.acc_number
+        account_number = journal.bank_account_id.account_number
         lines = getattr(self, f"_parse_lines_{sheet_type}")(
             mapping, data_file, currency_code
         )
@@ -113,7 +114,7 @@ class AccountStatementImportSheetParser(models.TransientModel):
             )
         transactions = list(
             itertools.chain.from_iterable(
-                map(lambda line: self._convert_line_to_transactions(line), lines)
+                self._convert_line_to_transactions(line) for line in lines
             )
         )
         data.update({"transactions": transactions})
@@ -135,11 +136,8 @@ class AccountStatementImportSheetParser(models.TransientModel):
                 continue
             column_index = None
             if mapping.no_header:
-                try:
+                with contextlib.suppress(ValueError, TypeError):
                     column_index = int(column_name_or_index)
-                # pylint: disable=except-pass
-                except Exception:
-                    pass
                 if column_index is not None:
                     column_indexes.append(column_index)
             else:
@@ -171,7 +169,7 @@ class AccountStatementImportSheetParser(models.TransientModel):
         """Parse CSV content into normalized statement line dictionaries.
         :return: Parsed statement lines ready for transaction conversion.
         """
-        columns = dict()
+        columns = {}
         csv_options = {}
         csv_delimiter = mapping._get_column_delimiter_character()
         if csv_delimiter:
@@ -249,11 +247,13 @@ class AccountStatementImportSheetParser(models.TransientModel):
         credit_column = raw_values["amount_credit_column"]
 
         if isinstance(timestamp, str):
-            timestamp = datetime.strptime(timestamp, mapping.timestamp_format)
+            timestamp = datetime.strptime(  # noqa: DTZ007
+                timestamp, mapping.timestamp_format
+            )
             if timestamp.year == 1900:
                 # No year indicated, so put the current or previous one depending
                 # on the current month (i.e. in January, importing December)
-                now = datetime.now()
+                now = fields.Datetime.now()
                 year = now.year
                 if timestamp.month > now.month:
                     year -= 1

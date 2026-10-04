@@ -99,7 +99,7 @@ class TestAccountStatementImportSheetFile(common.TransactionCase):
             data = file.read()
             if encoding:
                 data = data.encode(encoding)
-            return b64encode(data)
+            return b64encode(data).decode()
 
     def test_import_csv_file(self):
         wizard = self._get_import_wizard("fixtures/sample_statement_en.csv")
