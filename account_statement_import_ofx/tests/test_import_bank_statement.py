@@ -2,8 +2,8 @@ import base64
 import datetime
 from unittest.mock import patch
 
-import odoo.tests.common as common
 from odoo.exceptions import UserError
+from odoo.tests import common
 from odoo.tools import file_open
 
 
